@@ -14,8 +14,14 @@
     "plugin_type": "music_service"
   },
   "dependencies": {
+    "eslint": "^4.5.0",
     "fs-extra": "^0.28.0",
     "kew": "^0.7.0",
     "v-conf": "^1.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.5.0",
+    "eslint-config-airbnb-base": "^11.3.2",
+    "eslint-plugin-import": "^2.7.0"
   }
 }
