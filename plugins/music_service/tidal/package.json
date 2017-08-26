@@ -1,15 +1,16 @@
 {
-  "name": "example_plugin",
-  "version": "1.0.0",
-  "description": "Example Plugin for Volumio2",
+  "name": "tidal_plugin",
+  "version": "0.0.1",
+  "description": "Tidal Plugin for Volumio2",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run eslint",
+    "eslint": "node_modules/.bin/eslint ."
   },
   "author": "",
   "license": "ISC",
   "volumio_info": {
-    "prettyName": "Example Plugin",
+    "prettyName": "Tidal Plugin",
     "icon": "fa-lightbulb-o",
     "plugin_type": "music_service"
   },
