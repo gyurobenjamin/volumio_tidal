@@ -240,4 +240,12 @@ module.exports = class ControllerTidaPlugin {
     // Mandatory, search. You can divide the search in sections using following functions
     return defer.promise;
   }
+
+  /**
+   * saveTidalAccount
+   * @return void
+   */
+  saveTidalAccount() {
+    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::saveTidalAccount`);
+  }
 };
