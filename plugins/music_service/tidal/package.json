@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "volumio_info": {
-    "prettyName": "Tidal Plugin",
-    "icon": "fa-lightbulb-o",
+    "prettyName": "Tidal",
+    "icon": "fa-headphones",
     "plugin_type": "music_service"
   },
   "dependencies": {
