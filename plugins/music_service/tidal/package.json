@@ -16,9 +16,13 @@
   },
   "dependencies": {
     "eslint": "^4.5.0",
+    "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^0.28.0",
     "kew": "^0.7.0",
-    "v-conf": "^1.4.0"
+    "speaker": "^0.3.0",
+    "tidalapi": "^0.2.2",
+    "v-conf": "^1.4.0",
+    "wav": "^1.0.1"
   },
   "devDependencies": {
     "eslint": "^4.5.0",

@@ -1,7 +1,11 @@
 const libQ = require('kew');
 const Conf = require('v-conf');
+const TidalAPI = require('tidalapi');
+const ffmpeg = require('fluent-ffmpeg');
+const Speaker = require('speaker');
+const wav = require('wav');
 
-module.exports = class ControllerTidaPlugin {
+class ControllerTidaPlugin {
   constructor(context) {
     this.context = context;
     this.commandRouter = this.context.coreCommand;
@@ -21,8 +25,17 @@ module.exports = class ControllerTidaPlugin {
     const configFile = this.commandRouter
       .pluginManager
       .getConfigurationFile(this.context, 'config.json');
+
     this.config = new Conf();
     this.config.loadFile(configFile);
+
+    this.api = new TidalAPI({
+      username: this.config.username,
+      password: this.config.password,
+      token: this.config.token, // BI218mwp9ERZ3PFI
+      quality: 'HI_RES',
+    });
+
     return libQ.resolve();
   }
 
@@ -245,7 +258,49 @@ module.exports = class ControllerTidaPlugin {
    * saveTidalAccount
    * @return void
    */
-  saveTidalAccount() {
-    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::saveTidalAccount`);
+  saveAccount(data) {
+    const defer = libQ.defer();
+
+    this.config.set('username', data.username);
+    this.config.set('password', data.password);
+    this.config.set('token', data.token);
+    this.config.set('bitrate', data.bitrate);
+
+    this.api = new TidalAPI({
+      username: data.username,
+      password: data.password,
+      token: data.token,
+      quality: 'HI_RES',
+    });
+
+    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::saveTidalAccount - ${data.username}`);
+
+    return defer.promise;
   }
-};
+
+  /*
+  |--------------------------------------------------------------------------
+  | Temporary methods
+  |--------------------------------------------------------------------------
+  */
+
+  /**
+   * test play
+   * @return void
+   */
+  _playTest() {
+    this.api.getStreamURL({ id: 73725124 }, (data) => {
+      const reader = new wav.Reader();
+      reader.on('format', (format) => {
+        reader.pipe(new Speaker(format));
+      });
+      ffmpeg(data.url).format('wav')
+        .pipe(new Speaker(), { end: true })
+        .on('finish', () => {
+          // console.log('track finished');
+        });
+    });
+  }
+}
+
+module.exports = new ControllerTidaPlugin();

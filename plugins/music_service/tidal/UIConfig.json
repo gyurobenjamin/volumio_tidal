@@ -17,6 +17,7 @@
 			"data": [
 				"username",
 				"password",
+        "token",
 				"bitrate"
 			]
 		},
@@ -34,6 +35,14 @@
 				"element": "input",
 				"doc": "This is the password of your Tidal account",
 				"label": "Password",
+				"value": ""
+			},
+      {
+				"id": "token",
+				"type": "text",
+				"element": "input",
+        "doc": "X-Tidal-Token",
+				"label": "Token",
 				"value": ""
 			},
 			{
