@@ -248,9 +248,36 @@ class ControllerTidaPlugin {
    */
   search() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::search`);
-
     const defer = libQ.defer();
-    // Mandatory, search. You can divide the search in sections using following functions
+    const list = [];
+
+    this.api.search({
+      type: 'tracks,albums,artists',
+      query: 'Dream Theater',
+      limit: 1,
+    }, (data) => {
+      list.push({
+        type: 'title',
+        title: 'Tidal Artists',
+        availableListViews: ['list', 'grid'],
+        items: data.artists,
+      });
+      list.push({
+        type: 'title',
+        title: 'Tidal Tracks',
+        availableListViews: ['list'],
+        items: data.tracks,
+      });
+      list.push({
+        type: 'title',
+        title: 'Tidal Albums',
+        availableListViews: ['list', 'grid'],
+        items: data.albums,
+      });
+
+      defer.resolve(list);
+    });
+
     return defer.promise;
   }
 
