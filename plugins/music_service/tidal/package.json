@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "kew": "^0.7.0",
-    "tidalapi": "^0.2.2",
+    "tidalapi": "git@github.com:gyurobenjamin/TidalAPI.git",
     "v-conf": "^1.4.0"
   },
   "devDependencies": {

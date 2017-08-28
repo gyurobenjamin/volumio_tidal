@@ -31,13 +31,6 @@ module.exports = class ControllerTidaPlugin {
     this.config = new Conf();
     this.config.loadFile(configFile);
 
-    this.api = new TidalAPI({
-      username: '',
-      password: '',
-      token: 'BI218mwp9ERZ3PFI', // BI218mwp9ERZ3PFI
-      quality: 'HI_RES',
-    });
-
     return libQ.resolve();
   }
 
@@ -49,8 +42,17 @@ module.exports = class ControllerTidaPlugin {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::onStart`);
 
     const defer = libQ.defer();
-    // Once the Plugin has successfull started resolve the promise
+
+    this.api = new TidalAPI({
+      username: '',
+      password: '',
+      token: 'BI218mwp9ERZ3PFI', // BI218mwp9ERZ3PFI
+      quality: 'HI_RES',
+    });
+
+    this.addToBrowseSources();
     defer.resolve();
+
     return defer.promise;
   }
 
@@ -147,9 +149,13 @@ module.exports = class ControllerTidaPlugin {
   addToBrowseSources() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::addToBrowseSources`);
 
-    // Use this function to add your music service plugin to music sources
-    // d: {name: 'Spotify', uri: 'spotify', plugin_type:'music_service', plugin_name:'spop'};
-    // this.commandRouter.volumioAddToBrowseSources(data);
+	  this.commandRouter.volumioAddToBrowseSources({
+      name: 'Tidal',
+      uri: 'tidal',
+      plugin_type: 'music_service',
+      plugin_name: 'tidal',
+      albumart: '/albumart?sourceicon=music_service/tidal/tidal.svg'
+    });
   }
 
   /**
@@ -158,6 +164,28 @@ module.exports = class ControllerTidaPlugin {
    */
   handleBrowseUri() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::handleBrowseUri`);
+    return libQ.resolve({
+    	navigation: {
+    		lists: [{
+    			'availableListViews': [
+    				'list',
+    			],
+    			'items': [{
+    					service: 'tidal',
+    					type: 'tidal-category',
+    					title: 'My Playlists',
+    					artist: '',
+    					album: '',
+    					icon: 'fa fa-folder-open-o',
+    					uri: 'tidal/playlists',
+    				},
+    			],
+    		}],
+    		'prev': {
+    			uri: 'tidal',
+    		},
+    	},
+    });
   }
 
   /**
