@@ -1,3 +1,22 @@
 {
- 
+  "enabled": {
+    "type": "boolean",
+    "value": false
+  },
+  "username": {
+      "type": "string",
+      "value": ""
+  },
+  "password": {
+    "type": "string",
+    "value": ""
+  },
+  "token": {
+    "type": "string",
+    "value": "BI218mwp9ERZ3PFI"
+  },
+  "bitrate": {
+    "type": "boolean",
+    "value": true
+  }
 }

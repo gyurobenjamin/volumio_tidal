@@ -1,11 +1,13 @@
 const libQ = require('kew');
 const Conf = require('v-conf');
 const TidalAPI = require('tidalapi');
+/*
 const ffmpeg = require('fluent-ffmpeg');
 const Speaker = require('speaker');
 const wav = require('wav');
+*/
 
-class ControllerTidaPlugin {
+module.exports = class ControllerTidaPlugin {
   constructor(context) {
     this.context = context;
     this.commandRouter = this.context.coreCommand;
@@ -30,9 +32,9 @@ class ControllerTidaPlugin {
     this.config.loadFile(configFile);
 
     this.api = new TidalAPI({
-      username: this.config.username,
-      password: this.config.password,
-      token: this.config.token, // BI218mwp9ERZ3PFI
+      username: '',
+      password: '',
+      token: 'BI218mwp9ERZ3PFI', // BI218mwp9ERZ3PFI
       quality: 'HI_RES',
     });
 
@@ -266,7 +268,15 @@ class ControllerTidaPlugin {
         type: 'title',
         title: 'Tidal Tracks',
         availableListViews: ['list'],
-        items: data.tracks,
+        items: [{
+          service: 'tidal',
+    			type: 'song',
+    			title: 'track.name',
+    			artist: 'track.artists[0].name',
+    			album: 'track.album.name',
+    			albumart: 'albumart',
+    			uri: 'track.uri'
+        }],
       });
       list.push({
         type: 'title',
@@ -316,6 +326,7 @@ class ControllerTidaPlugin {
    * @return void
    */
   _playTest() {
+    /*
     this.api.getStreamURL({ id: 73725124 }, (data) => {
       const reader = new wav.Reader();
       reader.on('format', (format) => {
@@ -327,7 +338,6 @@ class ControllerTidaPlugin {
           // console.log('track finished');
         });
     });
+    */
   }
-}
-
-module.exports = new ControllerTidaPlugin();
+};

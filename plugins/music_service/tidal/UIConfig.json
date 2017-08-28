@@ -1,6 +1,6 @@
 {
 	"page": {
-		"label": "TRANSLATE.PLUGIN_CONFIGURATION"
+		"label": "Tidal Plugin Configuration"
 	},
 	"sections": [{
 		"id": "section_account",
@@ -10,7 +10,7 @@
 		"onSave": {
 			"type": "controller",
 			"endpoint": "music_service/tidal",
-			"method": "saveTidalAccount"
+			"method": "saveAccount"
 		},
 		"saveButton": {
 			"label": "Save",
