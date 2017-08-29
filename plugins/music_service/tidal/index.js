@@ -149,12 +149,12 @@ module.exports = class ControllerTidaPlugin {
   addToBrowseSources() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::addToBrowseSources`);
 
-	  this.commandRouter.volumioAddToBrowseSources({
+    this.commandRouter.volumioAddToBrowseSources({
       name: 'Tidal',
       uri: 'tidal',
       plugin_type: 'music_service',
       plugin_name: 'tidal',
-      albumart: '/albumart?sourceicon=music_service/tidal/tidal.svg'
+      albumart: '/albumart?sourceicon=music_service/tidal/tidal.svg',
     });
   }
 
@@ -165,26 +165,25 @@ module.exports = class ControllerTidaPlugin {
   handleBrowseUri() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::handleBrowseUri`);
     return libQ.resolve({
-    	navigation: {
-    		lists: [{
-    			'availableListViews': [
-    				'list',
-    			],
-    			'items': [{
-    					service: 'tidal',
-    					type: 'tidal-category',
-    					title: 'My Playlists',
-    					artist: '',
-    					album: '',
-    					icon: 'fa fa-folder-open-o',
-    					uri: 'tidal/playlists',
-    				},
-    			],
-    		}],
-    		'prev': {
-    			uri: 'tidal',
-    		},
-    	},
+      navigation: {
+        lists: [{
+          availableListViews: [
+            'list',
+          ],
+          items: [{
+            service: 'tidal',
+            type: 'tidal-category',
+            title: 'My Playlists',
+            artist: '',
+            album: '',
+            icon: 'fa fa-folder-open-o',
+            uri: 'tidal/playlists',
+          }],
+        }],
+        prev: {
+          uri: 'tidal',
+        },
+      },
     });
   }
 
@@ -274,43 +273,56 @@ module.exports = class ControllerTidaPlugin {
 
   /**
    * search
+   * @param string
    * @return string
    */
-  search() {
-    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::search`);
+  search(q) {
+    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::search ${JSON.stringify(q)}`);
     const defer = libQ.defer();
     const list = [];
 
     this.api.search({
       type: 'tracks,albums,artists',
-      query: 'Dream Theater',
-      limit: 1,
+      query: q.value,
+      limit: 10,
     }, (data) => {
       list.push({
         type: 'title',
         title: 'Tidal Artists',
         availableListViews: ['list', 'grid'],
-        items: data.artists,
+        items: data.artists.items.map(artist => ({
+          service: 'tidal',
+          type: 'folder',
+          title: artist.name,
+          albumart: artist.picture ? this.api.getArtURL(artist.picture, 1280) : '',
+          uri: artist.id,
+        })),
       });
       list.push({
         type: 'title',
         title: 'Tidal Tracks',
         availableListViews: ['list'],
-        items: [{
+        items: data.tracks.items.map(track => ({
           service: 'tidal',
-    			type: 'song',
-    			title: 'track.name',
-    			artist: 'track.artists[0].name',
-    			album: 'track.album.name',
-    			albumart: 'albumart',
-    			uri: 'track.uri'
-        }],
+          type: 'song',
+          title: track.title,
+          artist: track.artists.name,
+          album: track.album.title,
+          albumart: track.album.cover ? this.api.getArtURL(track.album.cover, 1280) : '',
+          uri: track.id,
+        })),
       });
       list.push({
         type: 'title',
         title: 'Tidal Albums',
         availableListViews: ['list', 'grid'],
-        items: data.albums,
+        items: data.albums.items.map(album => ({
+          service: 'tidal',
+          type: 'folder',
+          title: album.title,
+          albumart: album.cover ? this.api.getArtURL(album.cover, 1280) : '',
+          uri: album.id,
+        })),
       });
 
       defer.resolve(list);
@@ -348,24 +360,4 @@ module.exports = class ControllerTidaPlugin {
   | Temporary methods
   |--------------------------------------------------------------------------
   */
-
-  /**
-   * test play
-   * @return void
-   */
-  _playTest() {
-    /*
-    this.api.getStreamURL({ id: 73725124 }, (data) => {
-      const reader = new wav.Reader();
-      reader.on('format', (format) => {
-        reader.pipe(new Speaker(format));
-      });
-      ffmpeg(data.url).format('wav')
-        .pipe(new Speaker(), { end: true })
-        .on('finish', () => {
-          // console.log('track finished');
-        });
-    });
-    */
-  }
 };
