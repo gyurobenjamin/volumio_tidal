@@ -43,6 +43,7 @@ module.exports = class ControllerTidaPlugin {
 
     const defer = libQ.defer();
 
+    this.mpdPlugin = this.commandRouter.pluginManager.getPlugin('music_service', 'mpd');
     this.api = new TidalAPI({
       username: '',
       password: '',
@@ -76,6 +77,11 @@ module.exports = class ControllerTidaPlugin {
   onRestart() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::onRestart`);
     // Optional, use if you need it
+  }
+
+  resume() {
+    this.commandRouter.stateMachine.setConsumeUpdateService('mpd');
+    return this.mpdPlugin.sendMpdCommand('play', []);
   }
 
   /*
@@ -194,7 +200,15 @@ module.exports = class ControllerTidaPlugin {
   clearAddPlayTrack(track) {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::clearAddPlayTrack`);
     this.commandRouter.logger.info(JSON.stringify(track));
-    return this.sendSpopCommand('uplay', [track.uri]);
+
+    return this.mpdPlugin.sendMpdCommand('stop', [])
+      .then(() => this.mpdPlugin.sendMpdCommand('clear', []))
+      .then(() => this.mpdPlugin.sendMpdCommand(`load "${track.uri}"`, []))
+      .fail(() => this.mpdPlugin.sendMpdCommand(`add "${track.uri}"`, []))
+      .then(() => {
+        this.commandRouter.stateMachine.setConsumeUpdateService('mpd');
+        return this.mpdPlugin.sendMpdCommand('play', []);
+      });
   }
 
   /**
@@ -253,11 +267,32 @@ module.exports = class ControllerTidaPlugin {
    * explodeUri
    * @return
    */
-  explodeUri() {
+  explodeUri(uri) {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::explodeUri`);
 
     const defer = libQ.defer();
-    // Mandatory: retrieve all info for a given URI
+
+    // Play
+    if (uri.startsWith('tidal:track:')) {
+      const uriSplitted = uri.split(':');
+      this.api.getStreamURL({ id: uriSplitted[2] }, (data) => {
+        defer.resolve({
+          uri: data.url,
+          service: 'tidal',
+          name: 'data.name',
+          artist: 'artist',
+          album: 'album',
+          type: 'song',
+          duration: 300,
+          tracknumber: 3,
+          albumart: 'albumart',
+          samplerate: 256,
+          bitdepth: '16 bit',
+          trackType: 'tidal',
+        });
+      });
+    }
+
     return defer.promise;
   }
 
@@ -295,7 +330,7 @@ module.exports = class ControllerTidaPlugin {
           type: 'folder',
           title: artist.name,
           albumart: artist.picture ? this.api.getArtURL(artist.picture, 1280) : '',
-          uri: artist.id,
+          uri: `tidal:artist:${artist.id}`,
         })),
       });
       list.push({
@@ -309,7 +344,7 @@ module.exports = class ControllerTidaPlugin {
           artist: track.artists.name,
           album: track.album.title,
           albumart: track.album.cover ? this.api.getArtURL(track.album.cover, 1280) : '',
-          uri: track.id,
+          uri: `tidal:track:${track.id}`,
         })),
       });
       list.push({
@@ -321,7 +356,7 @@ module.exports = class ControllerTidaPlugin {
           type: 'folder',
           title: album.title,
           albumart: album.cover ? this.api.getArtURL(album.cover, 1280) : '',
-          uri: album.id,
+          uri: `tidal:album:${album.id}`,
         })),
       });
 
