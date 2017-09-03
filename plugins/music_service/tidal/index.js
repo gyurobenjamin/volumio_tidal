@@ -1,11 +1,7 @@
 const libQ = require('kew');
 const Conf = require('v-conf');
 const TidalAPI = require('tidalapi');
-/*
-const ffmpeg = require('fluent-ffmpeg');
-const Speaker = require('speaker');
-const wav = require('wav');
-*/
+const Sox = require('sox');
 
 module.exports = class ControllerTidaPlugin {
   constructor(context) {
@@ -206,8 +202,14 @@ module.exports = class ControllerTidaPlugin {
       .then(() => this.mpdPlugin.sendMpdCommand(`load "${track.uri}"`, []))
       .fail(() => this.mpdPlugin.sendMpdCommand(`add "${track.uri}"`, []))
       .then(() => {
-        this.commandRouter.stateMachine.setConsumeUpdateService('mpd');
-        return this.mpdPlugin.sendMpdCommand('play', []);
+        return this.mpdPlugin.sendMpdCommand('play', []).then(() => {
+          return this.mpdPlugin.getState().then((state) => {
+            const parsedState = this.mpdPlugin.parseState(state);
+            this.commandRouter.logger.info(`State ${JSON.stringify(state)}`);
+            this.commandRouter.logger.info(`parsedState ${JSON.stringify(parsedState)}`);
+            return this.commandRouter.stateMachine.syncState(state, 'tidal');
+          });
+        });
       });
   }
 
@@ -242,6 +244,7 @@ module.exports = class ControllerTidaPlugin {
    */
   getState() {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::getState`);
+    return this.mpdPlugin.getState();
   }
 
   /**
@@ -249,7 +252,8 @@ module.exports = class ControllerTidaPlugin {
    * @return void
    */
   parseState() {
-    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::parseState`);
+    this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::parseState}`);
+    return this.mpdPlugin.parseState();
     // Use this method to parse the state and eventually send it with the following function
   }
 
@@ -259,8 +263,7 @@ module.exports = class ControllerTidaPlugin {
    */
   pushState(state) {
     this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::pushState`);
-
-    return this.commandRouter.servicePushState(state, this.servicename);
+    return this.commandRouter.servicePushState(this.getState(), this.servicename);
   }
 
   /**
@@ -275,20 +278,24 @@ module.exports = class ControllerTidaPlugin {
     // Play
     if (uri.startsWith('tidal:track:')) {
       const uriSplitted = uri.split(':');
-      this.api.getStreamURL({ id: uriSplitted[2] }, (data) => {
-        defer.resolve({
-          uri: data.url,
-          service: 'tidal',
-          name: 'data.name',
-          artist: 'artist',
-          album: 'album',
-          type: 'song',
-          duration: 300,
-          tracknumber: 3,
-          albumart: 'albumart',
-          samplerate: 256,
-          bitdepth: '16 bit',
-          trackType: 'tidal',
+      this.api.getStreamURL({ id: uriSplitted[2] }, (streamData) => {
+        this.api.getTrackInfo({ id: uriSplitted[2] }, (trackInfo) => {
+          this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::explodeUri ${JSON.stringify(streamData)}`);
+          this.commandRouter.logger.info(`[${Date.now()}] ControllerTidalPlugin::explodeUri ${JSON.stringify(trackInfo)}`);
+          defer.resolve({
+            uri: streamData.url,
+            service: 'tidal',
+            name: trackInfo.title,
+            artist: trackInfo.artist.name,
+            album: trackInfo.album.name,
+            type: 'song',
+            duration: trackInfo.duration,
+            tracknumber: trackInfo.trackNumber,
+            albumart: trackInfo.album.cover ? this.api.getArtURL(trackInfo.album.cover, 1280) : '',
+            samplerate: streamData.soundQuality === 'HI_RES' ? '96 kHz' : '44.1 kHz',
+            bitdepth: streamData.soundQuality === 'HI_RES' ? '24 bit' : '16 bit',
+            trackType: streamData.codec,
+          });
         });
       });
     }
